@@ -208,12 +208,15 @@ class World:
                 # Update organic agent state after conversion
                 if isinstance(agent, OrganicAgent):
                     agent.update(consumed_dict, produced_dict)
+            else:
+                # No conversion happened - organic agents should check for starvation
+                if isinstance(agent, OrganicAgent):
+                    agent.update({}, {})
             
             # Check for organic agent specific behaviors
             if isinstance(agent, OrganicAgent):
-                # Check starvation
-                if agent.resources_accumulated < agent.starvation_threshold:
-                    agent.alive = False
+                # Check if agent died (from starvation check in update())
+                if not agent.alive:
                     dead_agents.append(agent_id)
                     continue
                 
