@@ -16,16 +16,24 @@ class World:
     - Time-based event execution and updates
     """
     
-    def __init__(self, width: int, height: int):
+    def __init__(self, 
+                 width: int, 
+                 height: int,
+                 organic_reproduction_chance: float = 0.3,
+                 inorganic_creation_chance: float = 0.05):
         """Initialize the world.
         
         Args:
             width: Width of the grid
             height: Height of the grid
+            organic_reproduction_chance: Probability of reproduction when able (0-1)
+            inorganic_creation_chance: Probability of creating inorganic agent per step (0-1)
         """
         self.width = width
         self.height = height
         self.time = 0
+        self.organic_reproduction_chance = organic_reproduction_chance
+        self.inorganic_creation_chance = inorganic_creation_chance
         
         # Agents indexed by their ID
         self.agents: Dict[str, Agent] = {}
@@ -190,20 +198,16 @@ class World:
                 
                 # Actually consume and produce goods
                 for good, amount in consumed_dict.items():
-                    actual_consumed = self.consume_good_nearby(
+                    self.consume_good_nearby(
                         agent.position, good, amount, agent.search_radius
                     )
-                    
-                    # Update organic agent's resources
-                    if isinstance(agent, OrganicAgent):
-                        agent.resources_accumulated -= actual_consumed
                 
                 for good, amount in produced_dict.items():
                     self.add_good(agent.position, good, amount)
-                    
-                    # Track resources for organic agents
-                    if isinstance(agent, OrganicAgent):
-                        agent.resources_accumulated += amount
+                
+                # Update organic agent state after conversion
+                if isinstance(agent, OrganicAgent):
+                    agent.update(consumed_dict, produced_dict)
             
             # Check for organic agent specific behaviors
             if isinstance(agent, OrganicAgent):
@@ -215,13 +219,13 @@ class World:
                 
                 # Check reproduction
                 if agent.can_reproduce():
-                    if random.random() < 0.3:  # 30% chance to reproduce when able
+                    if random.random() < self.organic_reproduction_chance:
                         child = agent.reproduce((self.width, self.height))
                         if child:
                             new_agents.append(child)
                 
                 # Chance to create inorganic agent
-                if random.random() < 0.05:  # 5% chance per step
+                if random.random() < self.inorganic_creation_chance:
                     inorganic = agent.create_inorganic_agent((self.width, self.height))
                     if inorganic:
                         new_agents.append(inorganic)

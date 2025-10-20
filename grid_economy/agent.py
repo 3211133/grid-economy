@@ -114,15 +114,18 @@ class OrganicAgent(Agent):
     def update(self, consumed: Dict[Good, float], produced: Dict[Good, float]):
         """Update agent state after conversion.
         
+        The agent benefits from the conversion process - the produced goods
+        represent accumulated resources for the agent.
+        
         Args:
             consumed: Goods consumed this time step
             produced: Goods produced this time step
         """
-        # Track net resources
-        consumed_amount = consumed.get(self.consumes, 0)
-        self.resources_accumulated -= consumed_amount
+        # Track net resources from production (this represents the agent's benefit)
+        produced_amount = produced.get(self.produces, 0)
+        self.resources_accumulated += produced_amount
         
-        # Check for starvation
+        # Check for starvation (death if no resources left)
         if self.resources_accumulated < self.starvation_threshold:
             self.alive = False
     

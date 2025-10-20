@@ -112,7 +112,9 @@ def test_organic_agent_reproduction(setup_goods):
     assert isinstance(child, OrganicAgent)
     
     # Check inheritance (should be same or mutated)
-    assert child.consumes in [good_x] or child.consumes in Good.get_all_good_types().values()
+    # Child's consumes should either be inherited or mutated to another registered good
+    all_good_ids = set(Good.get_all_good_types().keys())
+    assert child.consumes.good_type_id in all_good_ids
 
 
 def test_organic_agent_create_inorganic(setup_goods):
